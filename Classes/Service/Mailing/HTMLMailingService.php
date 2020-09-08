@@ -47,7 +47,7 @@ class HTMLMailingService extends AbstractMailingService
             return;
         }
 
-        $typo3Mail = GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Mail\\MailMessage');
+        $typo3Mail = GeneralUtility::makeInstance(MailMessage::class);
         $typo3Mail->setFrom([
                 $this->getDefaultSenderAddress() => $this->getDefaultSenderName()
             ]

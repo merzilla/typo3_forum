@@ -186,7 +186,7 @@ class PostController extends AbstractController {
 	/**
 	 * Displays the form for creating a new post.
 	 *
-	 * @dontvalidate $post
+	 * @ignorevalidation $post
 	 *
 	 * @param Topic $topic The topic in which the new post is to be created.
 	 * @param Post $post The new post.
@@ -207,7 +207,9 @@ class PostController extends AbstractController {
 			$post = ($quote !== NULL) ? $this->postFactory->createPostWithQuote($quote) : $this->postFactory->createEmptyPost();
 			// set given topic for this post, too
             $post->setTopic($topic);
-		}
+		} else {
+            $this->authenticationService->assertEditPostAuthorization($post);
+        }
 
 		$this->view->assignMultiple([
 			'topic' => $topic,
@@ -266,7 +268,7 @@ class PostController extends AbstractController {
 	/**
 	 * Displays a form for editing a post.
 	 *
-	 * @dontvalidate $post
+	 * @ignorevalidation $post
 	 * @param Post $post The post that is to be edited.
 	 * @return void
 	 */
@@ -370,6 +372,10 @@ class PostController extends AbstractController {
 	public function downloadAttachmentAction($attachment) {
         $attachment->increaseDownloadCount();
 		$this->attachmentRepository->update($attachment);
+
+		//Enforce persistence, since it will not happen regularly because of die() at the end
+		$persistenceManager = $this->objectManager->get("TYPO3\\CMS\\Extbase\\Persistence\\Generic\\PersistenceManager");
+		$persistenceManager->persistAll();
 
         header('Content-type: ' . $attachment->getMimeType());
         header("Content-Type: application/download");
