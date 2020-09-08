@@ -1,11 +1,9 @@
 <?php
 
-namespace Mittwald\Typo3Forum\ViewHelpers\Authentication;
-
 /*                                                                      *
  *  COPYRIGHT NOTICE                                                    *
  *                                                                      *
- *  (c) 2015 Mittwald CM Service GmbH & Co KG                           *
+ *  (c) 2017 Mittwald CM Service GmbH & Co KG                           *
  *           All rights reserved                                        *
  *                                                                      *
  *  This script is part of the TYPO3 project. The TYPO3 project is      *
@@ -25,46 +23,38 @@ namespace Mittwald\Typo3Forum\ViewHelpers\Authentication;
  *  This copyright notice MUST APPEAR in all copies of the script!      *
  *                                                                      */
 
-use Mittwald\Typo3Forum\Domain\Model\AccessibleInterface;
-use Mittwald\Typo3Forum\Domain\Model\Forum\Access;
-use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+namespace Mittwald\Typo3Forum\Service;
 
-/**
- * ViewHelper that renders its contents if the current user has access to a
- * certain operation on a certain object.
- */
-class IfAccessViewHelper extends AbstractViewHelper
+
+use Mittwald\Typo3Forum\Configuration\ConfigurationBuilder;
+use Mittwald\Typo3Forum\Domain\Model\ConfigurableInterface;
+use TYPO3\CMS\Extbase\DomainObject\DomainObjectInterface;
+use TYPO3\CMS\Extbase\Persistence\Generic\Mapper\DataMapper;
+
+class SettingsHydrator
 {
-
-	protected $escapeOutput = false;
-
-	protected $escapeChildren = false;
+    /**
+     * @var ConfigurationBuilder
+     */
+    private $configurationBuilder;
 
     /**
-     * The frontend user repository.
-     *
-     * @var \Mittwald\Typo3Forum\Domain\Repository\User\FrontendUserRepository
-     * @inject
+     * injectConfigurationBuilder.
+     * @param ConfigurationBuilder $configurationBuilder
      */
-    protected $frontendUserRepository;
+    public function injectConfigurationBuilder(\Mittwald\Typo3Forum\Configuration\ConfigurationBuilder $configurationBuilder)
+    {
+        $this->configurationBuilder = $configurationBuilder;
+    }
 
-	public function initializeArguments() {
-		parent::initializeArguments();
-		$this->registerArgument('object', AccessibleInterface::class, 'Object to check access for', true);
-		$this->registerArgument('accessType', 'string', true, Access::TYPE_READ);
-	}
-
-	/**
-	 * Renders this ViewHelper
-	 *
-	 * @return string The ViewHelper contents if the user has access to the specified operation.
-	 */
-	public function render()
-	{
-		$object = $this->arguments['object'];
-		$accessType = $this->arguments['accessType'];
-		if ($object->checkAccess($this->frontendUserRepository->findCurrent(), $accessType)) {
-			return $this->renderChildren();
-		}
-	}
+    /**
+     * hydrateSettings.
+     * @param DomainObjectInterface $object
+     */
+    public function hydrateSettings(DomainObjectInterface $object)
+    {
+        if ($object instanceof ConfigurableInterface) {
+            $object->injectSettings($this->configurationBuilder);
+        }
+    }
 }

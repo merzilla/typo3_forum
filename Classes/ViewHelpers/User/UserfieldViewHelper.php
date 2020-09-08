@@ -1,4 +1,5 @@
 <?php
+
 namespace Mittwald\Typo3Forum\ViewHelpers\User;
 
 /*                                                                      *
@@ -27,8 +28,10 @@ namespace Mittwald\Typo3Forum\ViewHelpers\User;
 use Mittwald\Typo3Forum\Domain\Model\User\FrontendUser;
 use Mittwald\Typo3Forum\Domain\Model\User\Userfield\AbstractUserfield;
 use Mittwald\Typo3Forum\Domain\Model\User\Userfield\TyposcriptUserfield;
-use TYPO3\CMS\Fluid\Core\ViewHelper\AbstractViewHelper;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Fluid\ViewHelpers\CObjectViewHelper;
+use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
+use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 
 /**
  *
@@ -38,31 +41,32 @@ use TYPO3\CMS\Fluid\ViewHelpers\CObjectViewHelper;
 class UserfieldViewHelper extends AbstractViewHelper
 {
 
-    /**
-     *
-     * Renders the userfield value.
-     *
-     * @param FrontendUser $user The user for whom the userfield value is to be rendered.
-     * @param AbstractUserfield $userfield The userfield
-     * @return string HTML content
-     *
-     */
-    public function render(FrontendUser $user, AbstractUserfield $userfield)
-    {
-        if (!$userfield instanceof TyposcriptUserfield) {
-            return new \InvalidArgumentException('Only userfields of type TyposcriptUserField are supported', 1435048481);
-        }
-        $data = $userfield->getValueForUser($user);
-        $data = $this->convertDataToString($data);
-        $cObjectViewHelper = $this->getCObjectViewHelper();
-        $cObjectViewHelper->arguments['typoscriptObjectPath'] = $userfield->getTyposcriptPath() . '.output';
-        $cObjectViewHelper->arguments['data'] = implode(' ', $data);
-        return $cObjectViewHelper->render();
-    }
+	/**
+	 * Renders the userfield value.
+	 *
+	 * @param FrontendUser $user The user for whom the userfield value is to be rendered.
+	 * @param AbstractUserfield $userfield The userfield
+	 *
+	 * @return string HTML content
+	 */
+	public function render(FrontendUser $user, AbstractUserfield $userfield)
+	{
+		if (!$userfield instanceof TyposcriptUserfield) {
+			return new \InvalidArgumentException('Only userfields of type TyposcriptUserField are supported',
+				1435048481);
+		}
+		$data = $userfield->getValueForUser($user);
+		$data = $this->convertDataToString($data);
+		$cObjectViewHelper = $this->getCObjectViewHelper();
+		$cObjectViewHelper->arguments['typoscriptObjectPath'] = $userfield->getTyposcriptPath() . '.output';
+		$cObjectViewHelper->arguments['data'] = implode(' ', $data);
+		return $cObjectViewHelper->render();
+	}
 
-    /**
+	/**
      *
      * Helper method that converts any type of variable to a string.
+     *
      *
      * @param mixed $data Anything
      * @return string Anything converted to a string
@@ -72,7 +76,7 @@ class UserfieldViewHelper extends AbstractViewHelper
     {
         if (is_array($data)) {
             foreach ($data as $k => &$v) {
-                $v = $this->convertDataToString($v);
+                $v = self::convertDataToString($v);
             }
             return $data;
         } else {
@@ -85,10 +89,11 @@ class UserfieldViewHelper extends AbstractViewHelper
     }
 
     /**
+     * getCObjectViewHelper.
      * @return CObjectViewHelper
      */
     protected function getCObjectViewHelper()
     {
-        return $this->objectManager->get(CObjectViewHelper::class);
+        return GeneralUtility::makeInstance(CObjectViewHelper::class);
     }
 }

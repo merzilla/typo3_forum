@@ -24,8 +24,9 @@ namespace Mittwald\Typo3Forum\Domain\Model\User;
  *  This copyright notice MUST APPEAR in all copies of the script!      *
  *                                                                      */
 
-use Mittwald\Typo3Forum\Configuration\ConfigurationBuilder;
 use Mittwald\Typo3Forum\Domain\Model\AccessibleInterface;
+use Mittwald\Typo3Forum\Domain\Model\ConfigurableEntityTrait;
+use Mittwald\Typo3Forum\Domain\Model\ConfigurableInterface;
 use Mittwald\Typo3Forum\Domain\Model\Forum\Access;
 use Mittwald\Typo3Forum\Domain\Model\Forum\Forum;
 use Mittwald\Typo3Forum\Domain\Model\Forum\Topic;
@@ -39,11 +40,13 @@ use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
 /**
  * A frontend user.
  */
-class FrontendUser extends \TYPO3\CMS\Extbase\Domain\Model\FrontendUser implements AccessibleInterface {
+class FrontendUser extends \TYPO3\CMS\Extbase\Domain\Model\FrontendUser implements AccessibleInterface, ConfigurableInterface {
 
 	const GENDER_MALE = 0;
 	const GENDER_FEMALE = 1;
 	const GENDER_PRIVATE = 99;
+
+	use ConfigurableEntityTrait;
 
 	/**
 	 * The rank repository
@@ -280,20 +283,6 @@ class FrontendUser extends \TYPO3\CMS\Extbase\Domain\Model\FrontendUser implemen
 	 * @var \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\Mittwald\Typo3Forum\Domain\Model\User\FrontendUserGroup>
 	 */
 	protected $usergroup;
-
-	/**
-	 * Whole TypoScript typo3_forum settings
-	 *
-	 * @var array
-	 */
-	protected $settings = NULL;
-
-    /**
-     * @param ConfigurationBuilder $configurationBuilder
-     */
-    public function injectSettings(ConfigurationBuilder $configurationBuilder) {
-        $this->settings = $configurationBuilder->getSettings();
-    }
 
     /**
 	 * Constructor.
@@ -601,12 +590,10 @@ class FrontendUser extends \TYPO3\CMS\Extbase\Domain\Model\FrontendUser implemen
 	public function getImagePath() {
 
 		if ($this->image) {
-			$imageDirectoryName = $this->settings['images']['avatar']['uploadDir'];
             foreach ($this->image as $image) {
-                /* @var FileReference $image */
-                $singleImage = $image->getOriginalFile();
-                $imageFilename = rtrim($imageDirectoryName, '/') . '/' . $singleImage->getPublicUrl();
-                return file_exists($imageFilename) ? $imageFilename : NULL;
+                /* @var \TYPO3\CMS\Extbase\Domain\Model\FileReference $image */
+                $singleImage = $image->getOriginalResource();
+                return $singleImage->getPublicUrl();
 			}
 		}
 
@@ -627,10 +614,10 @@ class FrontendUser extends \TYPO3\CMS\Extbase\Domain\Model\FrontendUser implemen
 
 		switch ($this->gender) {
 			case self::GENDER_MALE:
-				$imageFilename = $this->settings['images']['avatar']['dummyMale'];
+				$imageFilename = $this->getSettings()['images']['avatar']['dummyMale'];
 				break;
 			case self::GENDER_FEMALE:
-				$imageFilename = $this->settings['images']['avatar']['dummyFemale'];
+				$imageFilename = $this->getSettings()['images']['avatar']['dummyFemale'];
 				break;
 		}
 
